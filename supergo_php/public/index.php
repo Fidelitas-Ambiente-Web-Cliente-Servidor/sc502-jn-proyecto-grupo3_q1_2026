@@ -441,31 +441,33 @@ if ($nombreCategoriaSeleccionada !== '' && isset($mapaBanners[$nombreCategoriaSe
     <div class="navbar-right">
     <?php if (estaLogueado()): ?>
 
-        <a class="nav-link-sg" href="perfil.php" style="display:flex;align-items:center;gap:10px;">
-            <?php if (!empty($fotoPerfilNavbar)): ?>
-                <img
-                    src="<?= htmlspecialchars($fotoPerfilNavbar) ?>"
-                    alt="Foto de perfil"
-                    style="width:40px;height:40px;border-radius:50%;object-fit:cover;"
-                >
-            <?php else: ?>
-                <div style="width:40px;height:40px;border-radius:50%;background:#ffffff;color:#198754;display:flex;align-items:center;justify-content:center;font-weight:bold;">
-                    <?= strtoupper(substr($_SESSION['nombre'], 0, 1)) ?>
-                </div>
-            <?php endif; ?>
-
-            <span class="nav-user"><?= htmlspecialchars($_SESSION['nombre']) ?></span>
-        </a>
-
-        <?php if (($_SESSION['rol'] ?? '') === 'ADMIN'): ?>
-            <a class="nav-btn-sg" href="admin.php">Administrar productos</a>
+    <a class="nav-link-sg" href="perfil.php" style="display:flex;align-items:center;gap:10px;">
+        <?php if (!empty($fotoPerfilNavbar)): ?>
+            <img
+                src="<?= htmlspecialchars($fotoPerfilNavbar) ?>"
+                alt="Foto de perfil"
+                style="width:40px;height:40px;border-radius:50%;object-fit:cover;"
+            >
+        <?php else: ?>
+            <div style="width:40px;height:40px;border-radius:50%;background:#ffffff;color:#198754;display:flex;align-items:center;justify-content:center;font-weight:bold;">
+                <?= strtoupper(substr($_SESSION['nombre'], 0, 1)) ?>
+            </div>
         <?php endif; ?>
 
-        <a class="nav-link-sg" href="logout.php">Salir</a>
+        <span class="nav-user"><?= htmlspecialchars($_SESSION['nombre']) ?></span>
+    </a>
+
+    <?php if (($_SESSION['rol'] ?? '') === 'ADMIN'): ?>
+        <a class="nav-btn-sg" href="admin.php">Panel admin</a>
     <?php else: ?>
-        <a class="nav-btn-sg" href="login.php">Iniciar sesión</a>
-        <a class="nav-link-sg" href="registro.php">Registro</a>
+        <a class="nav-link-sg" href="historial.php">Mis pedidos</a>
     <?php endif; ?>
+
+    <a class="nav-link-sg" href="logout.php">Salir</a>
+<?php else: ?>
+    <a class="nav-btn-sg" href="login.php">Iniciar sesión</a>
+    <a class="nav-link-sg" href="registro.php">Registro</a>
+<?php endif; ?>
 </div>
 </nav>
 
@@ -546,6 +548,7 @@ if ($nombreCategoriaSeleccionada !== '' && isset($mapaBanners[$nombreCategoriaSe
                         <?php if ((int)$p['stock'] > 0): ?>
                             <div class="product-actions">
                                 <form action="agregar_carrito.php" method="POST">
+                                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(csrfToken()) ?>">
                                     <input type="hidden" name="productoId" value="<?= (int)$p['id'] ?>">
                                     <input type="number" name="cantidad" min="1" max="<?= (int)$p['stock'] ?>" value="1">
                                     <button type="submit">Agregar al carrito</button>

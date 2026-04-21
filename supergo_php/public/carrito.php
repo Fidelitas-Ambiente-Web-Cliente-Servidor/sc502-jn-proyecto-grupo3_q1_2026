@@ -196,7 +196,7 @@ if (estaLogueado()) {
                     </div>
 
                     <div class="mt-3 text-end">
-                        <a class="btn btn-main-lg text-decoration-none" href="procesar_compra.php">
+                        <a class="btn btn-main-lg text-decoration-none" href="checkout.php">
                             Proceder a pago
                         </a>
                     </div>
