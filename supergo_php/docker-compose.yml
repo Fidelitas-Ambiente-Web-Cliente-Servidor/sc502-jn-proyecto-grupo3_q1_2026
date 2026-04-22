@@ -1,0 +1,32 @@
+version: "3.8"
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: supergo_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: supergo
+    ports:
+      - "3307:3306"
+    volumes:
+      - ./database:/docker-entrypoint-initdb.d
+
+  php:
+    build: .
+    container_name: supergo_php
+    restart: always
+    depends_on:
+      - mysql
+    environment:
+      DB_HOST: mysql
+      DB_NAME: supergo
+      DB_USER: root
+      DB_PASS: root
+    ports:
+      - "8080:80"
+    volumes:
+      - ./public:/var/www/html
+      - ./config:/var/www/config
+      - ./includes:/var/www/includes
