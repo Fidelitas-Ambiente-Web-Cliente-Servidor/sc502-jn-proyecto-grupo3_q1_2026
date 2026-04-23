@@ -1,78 +1,61 @@
 <?php
-require_once __DIR__ . '/../config/conexion.php';
+/**
+ * pago_exitoso.php
+ * Muestra un mensaje de éxito después de realizar la compra.
+ */
 require_once __DIR__ . '/../includes/auth.php';
-
-requireLogin();
-verifyCsrf();
-
-$idUsuario = (int)$_SESSION['id_usuario'];
-$telefono = trim($_POST['telefono'] ?? '');
-$direccion = trim($_POST['direccion'] ?? '');
-$metodoPago = trim($_POST['metodo_pago'] ?? '');
-
-if ($telefono === '' || $direccion === '' || $metodoPago === '') {
-    header('Location: checkout.php?error=Completa todos los campos');
-    exit;
-}
-
-try {
-    $pdo->beginTransaction();
-
-    $stmt = $pdo->prepare("SELECT c.id, c.cantidad, p.id AS producto_id, p.nombre, p.precio, p.stock
-                           FROM carrito c
-                           INNER JOIN productos p ON c.id_producto = p.id
-                           WHERE c.id_usuario = ?
-                           FOR UPDATE");
-    $stmt->execute([$idUsuario]);
-    $items = $stmt->fetchAll();
-
-    if (!$items) {
-        throw new Exception('Tu carrito está vacío.');
-    }
-
-    $subtotal = 0;
-    foreach ($items as $it) {
-        if ((int)$it['cantidad'] > (int)$it['stock']) {
-            throw new Exception('No hay stock suficiente para ' . $it['nombre']);
+$pedido = $_GET['pedido'] ?? '';
+?>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Compra exitosa - SuperGO</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .success-box {
+            max-width: 600px;
+            margin: 80px auto;
+            text-align: center;
+            padding: 40px;
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
         }
-        $subtotal += $it['cantidad'] * $it['precio'];
-    }
-
-    $impuestos = $subtotal * 0.13;
-    $envio = 2500;
-    $total = $subtotal + $impuestos + $envio;
-    $numeroPedido = 'SG-' . date('YmdHis') . '-' . random_int(100, 999);
-
-    $stmt = $pdo->prepare("UPDATE usuarios SET telefono = ?, direccion = ? WHERE id = ?");
-    $stmt->execute([$telefono, $direccion, $idUsuario]);
-
-    $stmt = $pdo->prepare("INSERT INTO pedidos (numero_pedido, id_usuario, subtotal, impuestos, envio, total, estado, direccion_envio, telefono_envio, metodo_pago)
-                           VALUES (?, ?, ?, ?, ?, ?, 'pagado', ?, ?, ?)");
-    $stmt->execute([$numeroPedido, $idUsuario, $subtotal, $impuestos, $envio, $total, $direccion, $telefono, $metodoPago]);
-    $idPedido = (int)$pdo->lastInsertId();
-
-    $stmtDetalle = $pdo->prepare("INSERT INTO detalle_pedido (id_pedido, id_producto, cantidad, precio_unitario, subtotal)
-                                  VALUES (?, ?, ?, ?, ?)");
-    $stmtStock = $pdo->prepare("UPDATE productos SET stock = stock - ? WHERE id = ?");
-
-    foreach ($items as $it) {
-        $sub = $it['cantidad'] * $it['precio'];
-        $stmtDetalle->execute([$idPedido, $it['producto_id'], $it['cantidad'], $it['precio'], $sub]);
-        $stmtStock->execute([$it['cantidad'], $it['producto_id']]);
-    }
-
-    $stmt = $pdo->prepare("DELETE FROM carrito WHERE id_usuario = ?");
-    $stmt->execute([$idUsuario]);
-
-    $pdo->commit();
-
-    header('Location: pago_exitoso.php?pedido=' . urlencode($numeroPedido) . '&id=' . $idPedido);
-    exit;
-
-} catch (Throwable $e) {
-    if ($pdo->inTransaction()) {
-        $pdo->rollBack();
-    }
-    header('Location: carrito.php?error=' . urlencode($e->getMessage()));
-    exit;
-}
+        .success-icon {
+            font-size: 64px;
+            color: #3DB563;
+            margin-bottom: 20px;
+        }
+        .order-number {
+            background: #f0f0f0;
+            padding: 10px;
+            border-radius: 12px;
+            font-family: monospace;
+            font-size: 1.2rem;
+            display: inline-block;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <div class="container">
+        <div class="success-box">
+            <div class="success-icon">✅</div>
+            <h1>¡Pago simulado exitoso!</h1>
+            <p>Tu pedido ha sido registrado correctamente.</p>
+            <div class="order-number">
+                Número de pedido: <strong><?php echo htmlspecialchars($pedido); ?></strong>
+            </div>
+            <p>Recibirás un correo de confirmación (simulado).</p>
+            <div class="mt-4">
+                <a href="index.php" class="btn btn-main">Seguir comprando</a>
+                <a href="historial.php" class="btn btn-outline-primary ms-2">Ver mis pedidos</a>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
